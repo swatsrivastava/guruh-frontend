@@ -21,6 +21,8 @@ export default function App() {
       <Header setRoute={setRoute} />
       <main className="max-w-6xl mx-auto px-6 relative z-10">
         {route === "landing" && <Landing setRoute={setRoute} />}
+        {route === "discover" && <Discover />}
+
       </main>
       <Footer />
     </div>
@@ -120,6 +122,74 @@ function FeatureCard({ title, desc }) {
     </div>
   );
 }
+
+function Discover() {
+  const [mentors, setMentors] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function loadMentors() {
+      try {
+        const resp = await fetch('/api/mentors');
+        const json = await resp.json();
+        setMentors(json.mentors || []);
+      } catch (err) {
+        console.error("Failed to load mentors:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMentors();
+  }, []);
+
+  const handleBooking = async (mentorId) => {
+    const mentee_name = "Swati Test";
+    const mentee_email = "swati@example.com";
+    const session_type = "Career Guidance";
+    const scheduled_at = new Date().toISOString();
+
+    try {
+      const resp = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mentor_id: mentorId, mentee_name, mentee_email, session_type, scheduled_at })
+      });
+      if (!resp.ok) throw new Error('Booking failed');
+      alert("Booking created successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Error creating booking");
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-[70vh] text-purple-700 text-lg">
+        Loading mentors...
+      </div>
+    );
+
+  return (
+    <section className="max-w-5xl mx-auto py-12">
+      <h2 className="text-3xl font-bold text-purple-800 mb-6 text-center">Find Your Perfect Mentor</h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {mentors.map((m) => (
+          <div key={m.id} className="bg-white/80 border border-purple-200 rounded-2xl p-6 shadow hover:shadow-xl transition-transform hover:-translate-y-1">
+            <h3 className="text-xl font-semibold text-purple-700 mb-1">{m.name}</h3>
+            <p className="text-sm text-gray-600 mb-3">{m.expertise}</p>
+            <button
+              onClick={() => handleBooking(m.id)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+            >
+              Book Session
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 
 function Footer() {
   return (
